@@ -13,7 +13,7 @@ class Boton:
     def esta_sobre(self, pos):
         return self.rect.collidepoint(pos)
 
-    def dibujar(self, pantalla):
+    def dibujar(self, pantalla, borde=False):
         pygame.draw.rect(pantalla, self.color_actual, self.rect)
         texto = self.fuente.render(self.mensaje, True, self.color_texto)
         texto_rect = texto.get_rect(center=self.rect.center)
@@ -22,3 +22,5 @@ class Boton:
             self.color_actual = self.color_activo
         else:
             self.color_actual = self.color_normal
+        if borde:
+            pygame.draw.rect(pantalla, NEGRO, self.rect, 2)  
