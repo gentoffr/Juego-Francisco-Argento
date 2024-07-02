@@ -19,3 +19,4 @@ VERDE_AQUAMARINA = (54, 186, 152)
 ventana = pygame.display.set_mode((ANCHO, ALTO))
 
 fuente = pygame.font.SysFont("Arial", 30)
+fuente_nombres = pygame.font.SysFont("Arial", 50)
