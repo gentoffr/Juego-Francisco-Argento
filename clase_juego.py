@@ -51,6 +51,21 @@ class Juego:
         self.whatsapp = self.lista_total["WhatsApp"]
         self.windows = self.lista_total["Windows"]
         self.youtube = self.lista_total["YouTube"]
+        self.adidas2 = self.adidas.copy()
+        self.apple2 = self.apple.copy()
+        self.boca2 = self.boca.copy()
+        self.coca2 = self.coca.copy()
+        self.facebook2 = self.facebook.copy()
+        self.ferrari2 = self.ferrari.copy()
+        self.google2 = self.google.copy()
+        self.instagram2 = self.instagram.copy()
+        self.mcdonalds2 = self.mcdonalds.copy()
+        self.nike2 = self.nike.copy()
+        self.pepsi2 = self.pepsi.copy()
+        self.twitter2 = self.twitter.copy()
+        self.whatsapp2 = self.whatsapp.copy()
+        self.windows2 = self.windows.copy()
+        self.youtube2 = self.youtube.copy()
         self.lista_indices_disponibles = list(range(len(self.lista_total)))
         self.usadas = set()
         self.lista_para_resetear = self.lista_total
@@ -89,7 +104,18 @@ class Juego:
             boton_salir.dibujar(self.ventana, True)
             if pygame.mouse.get_pressed()[0]:
                 self.corriendo = False
+                self.guardar_records()
         boton_salir.dibujar(self.ventana, True)
+    
+    def boton_menu(self, place, size, color_normal, color_activo, mensaje, fuente, color_texto):
+        boton_menu = Boton(place, size, color_normal, color_activo, mensaje, fuente, color_texto)
+        if boton_menu.esta_sobre(pygame.mouse.get_pos()):
+            boton_menu.color_actual = VERDE
+            boton_menu.dibujar(self.ventana, True)
+            if pygame.mouse.get_pressed()[0]:
+                self.flag_menu = True
+                self.reiniciar_juego()
+        boton_menu.dibujar(self.ventana, True)
 
     def boton_jugar(self, place, size, color_normal, color_activo, mensaje, fuente, color_texto):
         boton_jugar = Boton(place, size, color_normal, color_activo, mensaje, fuente, color_texto)
@@ -99,6 +125,7 @@ class Juego:
             if pygame.mouse.get_pressed()[0]:
                 self.flag_menu = False
                 self.flag_transicion = True
+                self.guardar_records()
         boton_jugar.dibujar(self.ventana, True)
         
     def gestion_botones(self):
@@ -119,17 +146,18 @@ class Juego:
         self.ventana.fill(COLOR_FONDO)
         self.info()
         self.ventana.blit(self.doomguy.loop_idle(120, 3, 24, 29, 5, 200), (ANCHO // 2 -60, ALTO // 2-200))
-        self.boton_salir((ANCHO // 2 + 100, ALTO // 2 +100), (100, 100), BLANCO, ROJO, "SALIR", fuente, NEGRO)
-        self.boton_jugar((ANCHO // 2 - 100, ALTO // 2+100), (100, 100), BLANCO, VERDE, "JUGAR", fuente, NEGRO)
+        self.boton_salir((ANCHO // 2 + 100, ALTO // 2 + 100), (100, 100), BLANCO, ROJO, "SALIR", fuente, NEGRO)
+        self.boton_jugar((ANCHO // 2 - 100, ALTO // 2 + 100), (100, 100), BLANCO, VERDE, "JUGAR", fuente, NEGRO)
         titulo_render = fuente_nombres.render(self.titulo, True, BLANCO)
         self.ventana.blit(titulo_render, (ANCHO // 2 - titulo_render.get_width() // 2, 100))
         self.tira_imagenes()
+        
+
 
     def transicion(self):
         self.ventana.fill(COLOR_FONDO)
         if self.x_doomguy > 200:
             self.x_doomguy -= 2
-            print(self.x_doomguy)
         if self.x_cortina > (ANCHO // 2) - 100:
             self.x_cortina -= 2
         else:
@@ -139,7 +167,8 @@ class Juego:
         self.ventana.blit(self.doomguy_aciertos.transformar_imagen(0, 24, 29, 5), (self.x_doomguy, ALTO // 2-200))
         self.ventana.blit(self.cortinas.transformar_imagen(0, 149, 89, 3), (self.x_cortina, ALTO // 2-200))
         self.info()
-        self.boton_salir((ANCHO - 50, 100), (100, 100), BLANCO, ROJO, "SALIR", fuente, NEGRO)
+        self.boton_menu((ANCHO - 150, 60), (100, 60), BLANCO, AMARILLITO, "MENU", fuente, NEGRO)
+        self.boton_salir((ANCHO - 50, 60), (100, 60), BLANCO, ROJO, "SALIR", fuente, NEGRO)
 
     def info(self):
         panel = pygame.Rect(0, 0, ANCHO, 60)
@@ -176,7 +205,8 @@ class Juego:
             self.info()
         else:
             self.generar_ronda()
-        self.boton_salir((ANCHO - 50, 100), (100, 100), BLANCO, ROJO, "SALIR", fuente, NEGRO)
+        self.boton_menu((ANCHO - 150, 60), (100, 60), BLANCO, AMARILLITO, "MENU", fuente, NEGRO)
+        self.boton_salir((ANCHO - 50, 60), (100, 60), BLANCO, ROJO, "SALIR", fuente, NEGRO)
 
     def encontrar_logo(self):
         if self.activar_rng:
@@ -204,7 +234,8 @@ class Juego:
             self.tiempo_ronda += 1
             self.info()
             self.ventana.blit(self.vidas_actuales(self.vidas), (120, 0))
-            self.ventana.blit(fuente.render(str(self.tiempo_ronda // 60), True, (BLANCO)), (100,100))
+            self.ventana.blit(fuente.render(f"{round(self.tiempo_ronda / 60, 2)}s", True, (BLANCO)), (100,100))
+            self.ventana.blit(fuente.render(f"{self.contador_aciertos}/15 aciertos", True, (BLANCO)), (800,100))
             if self.flag_incorrecta:
                 self.tiempo_aux += 1
                 if self.tiempo_aux < 60:
@@ -249,10 +280,13 @@ class Juego:
 
     def acertar(self):
         self.tiempo += 1
-        self.boton_salir((ANCHO - 50, 100), (100, 100), BLANCO, ROJO, "SALIR", fuente, NEGRO)
+        self.boton_salir((ANCHO - 50, 60), (100, 60), BLANCO, ROJO, "SALIR", fuente, NEGRO)
         self.ventana.blit(self.imagen_moneda.loop_idle(10, 8, 47, 47, 1), (5, 7))
         cuadrado = pygame.Surface((50, 40))
         cuadrado.fill(VERDE_AQUAMARINA)
+        cuadrado2 = pygame.Surface((100, 60))
+        cuadrado2.fill(NARANJA)
+        self.ventana.blit(cuadrado2, (ANCHO - 200, 0))
         self.ventana.blit(cuadrado, (60, 11))
         monedas_render = fuente.render(f"{self.monedas}", True, BLANCO)
         self.ventana.blit(monedas_render, (60, 11))
@@ -376,14 +410,15 @@ class Juego:
             # self.ventana.blit(self.monedas_obtenidas, (ANCHO // 2, ALTO // 2))
         elif self.tiempo_aux < 1080:
             self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
-            self.ventana.blit(fuente.render(f"Monedas obtenidas esta partida: {self.monedas}", True, BLANCO), (ANCHO // 2, ALTO // 2))
-            self.ventana.blit(fuente.render(f"Record de monedas obtenidas: {self.record_monedas}", True, BLANCO), (ANCHO // 2, ALTO // 2 + 40))
+            self.ventana.blit(fuente.render(f"Monedas obtenidas esta partida: {self.monedas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2))
+            self.ventana.blit(fuente.render(f"Record de monedas obtenidas: {self.record_monedas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 40))
             if self.calcular_stats() == float('inf'):
-                self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: N/A", True, BLANCO), (ANCHO // 2, ALTO // 2 + 80))
+                self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: N/A", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
             else:
-                self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: {self.calcular_stats()}s", True, BLANCO), (ANCHO // 2, ALTO // 2 + 80))
-            self.ventana.blit(fuente.render(f"Promedio record por ronda: {self.record_tiempo}s", True, BLANCO), (ANCHO // 2, ALTO // 2 + 120))
+                self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: {self.calcular_stats()}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
+            self.ventana.blit(fuente.render(f"Promedio record por ronda: {self.record_tiempo}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 120))
         else:
+            self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
             self.fade_in_out_text(texto, color)
             
     
@@ -418,27 +453,18 @@ class Juego:
             json.dump(data, file, indent=4)
         
     def fade_in_out_text(self, text, color):
-        fade_duration = 2000  # Duración de fade en milisegundos
-        text_duration = 3000  # Duración del texto en pantalla en milisegundos
-        
-        # Aumentar el tiempo en cada llamada al método
+        fade_duration = 2000 
+        text_duration = 3000  
         self.tiempo += 1
-        
-        # Calcular la duración total en frames
-        fade_frames = fade_duration // (1000 // 60)  # Conversión a frames considerando FPS
-        text_frames = text_duration // (1000 // 60)  # Conversión a frames considerando FPS
-
-        # Crear superficies para el fade y el texto
+        fade_frames = fade_duration // (1000 // 60)  
+        text_frames = text_duration // (1000 // 60)  
         fade_surface = pygame.Surface((ANCHO, ALTO))
         fade_surface.fill(NEGRO)
         text_surface = fuente_nombres.render(text, True, color)
-
-        # Si el tiempo es menor que la duración del fade, hacer fade out
         if self.tiempo < fade_frames:
             alpha = (self.tiempo * 255) // fade_frames
             fade_surface.set_alpha(alpha)
             self.ventana.blit(fade_surface, (0, 0))
-        # Si el tiempo está entre el fade y la duración del texto, mostrar el texto
         elif self.tiempo < fade_frames + text_frames: 
             fade_surface.set_alpha(0)
             self.ventana.fill(NEGRO)
@@ -446,16 +472,8 @@ class Juego:
             text_surface.set_alpha(text_alpha)
             self.ventana.blit(text_surface, (ANCHO // 2 - text_surface.get_width() // 2, ALTO // 2 - text_surface.get_height() // 2))
             self.ventana.blit(fade_surface, (0, 0))
-            
-        # Cuando se superan las duraciones de fade y texto, resetear y cambiar flags
         else:
-            print("Entrando al último else...")
             self.reiniciar_juego()
-
-        # Debugging: Mostrar el valor actual de self.tiempo
-        print("Tiempo actual:", self.tiempo)
-    # ... [código existente] ...
-
     def reiniciar_juego(self):
         self.flag_menu = True
         self.flag_transicion = False
@@ -468,7 +486,7 @@ class Juego:
         self.flag_incorrecta = False
         self.flag_ganar = False
         self.doomguy = Sprites(pygame.image.load("src\Doomguy_fijandose.png"))
-        self.lista_total = self.lista_para_resetear
+        self.lista_total = self.lista_para_resetear.copy()
         self.tiempo_ronda = 0
         self.tiempos = []
         self.tiempo_aux = 0
@@ -483,21 +501,20 @@ class Juego:
         self.correcta_en_juego = None
         self.nombre_correcta = None
         self.pos_correcta = None
-        self.adidas = self.lista_total["Adidas"]
-        self.apple = self.lista_total["Apple"]
-        self.boca = self.lista_total["Boca Juniors"]
-        self.coca = self.lista_total["Coca-Cola"]
-        self.facebook = self.lista_total["Facebook"]
-        self.ferrari = self.lista_total["Ferrari"]
-        self.google = self.lista_total["Google"]
-        self.instagram = self.lista_total["Instagram"]
-        self.mcdonalds = self.lista_total["McDonalds"]
-        self.nike = self.lista_total["Nike"]
-        self.pepsi = self.lista_total["Pepsi"]
-        self.twitter = self.lista_total["Twitter"]
-        self.whatsapp = self.lista_total["WhatsApp"]
-        self.windows = self.lista_total["Windows"]
-        self.youtube = self.lista_total["YouTube"]
+        self.adidas = self.adidas2.copy()
+        self.apple = self.apple2.copy()
+        self.boca = self.boca2.copy()
+        self.coca = self.coca2.copy()
+        self.facebook = self.facebook2.copy()
+        self.ferrari = self.ferrari2.copy()
+        self.google = self.google2.copy()
+        self.instagram = self.instagram2.copy()
+        self.mcdonalds = self.mcdonalds2.copy()
+        self.nike = self.nike2.copy()
+        self.pepsi = self.pepsi2.copy()
+        self.twitter = self.twitter2.copy()
+        self.whatsapp = self.whatsapp2.copy()
+        self.windows = self.windows2.copy()
         self.encontrar_logo()
 
 

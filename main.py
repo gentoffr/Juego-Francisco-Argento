@@ -7,3 +7,4 @@ while juego.corriendo:
     juego.gestor_eventos()
     juego.gestion_botones()
     pygame.display.flip()
+    
