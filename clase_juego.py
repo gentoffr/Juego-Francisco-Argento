@@ -230,6 +230,7 @@ class Juego:
         elif self.contador_aciertos >= 15:
             self.flag_juego = False
             self.flag_ganar = True
+            self.tiempo = 0
         else:
             self.tiempo_ronda += 1
             self.info()
@@ -259,7 +260,7 @@ class Juego:
                                 self.pos_correcta = rect_imagen
                                 self.monedas += 20
                                 self.monedas_obtenidas += 20
-                                self.contador_aciertos += 1
+                                self.contador_aciertos += 15
                                 self.tiempos.append(self.tiempo_ronda / 60)
                                 self.tiempo = 0
                                 self.tiempo_ronda = 0
