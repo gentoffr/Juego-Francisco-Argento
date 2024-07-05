@@ -9,10 +9,7 @@ class Juego:
         self.reloj = pygame.time.Clock()
         self.corriendo = True
         self.titulo = "Juego bien malandro"
-        self.flag_menu = True
-        self.flag_transicion = False
-        self.flag_juego = False
-        self.flag_correcta = False
+        
         self.monedas = 0
         self.record_monedas = 0
         self.record_tiempo = 0
@@ -35,7 +32,7 @@ class Juego:
         self.over = Sprites(pygame.image.load(r"src\Over.png"))
         self.UHHHHH = Sprites(pygame.image.load(r"src\UHHHHHH.png"))
         self.doomGOD = Sprites(pygame.image.load("src\DoomGOD.png"))
-        self.vidas = 5
+        
         self.lista_total = crear_lista("src\Imagenes")
         self.adidas = self.lista_total["Adidas"]
         self.apple = self.lista_total["Apple"]
@@ -67,31 +64,36 @@ class Juego:
         self.whatsapp2 = self.whatsapp.copy()
         self.windows2 = self.windows.copy()
         self.youtube2 = self.youtube.copy()
-        self.lista_indices_disponibles = list(range(len(self.lista_total)))
-        self.usadas = set()
         self.lista_para_resetear = self.lista_total
         self.correctas = [self.lista_total[key][0] for key in self.lista_total]
-        self.x_doomguy = ANCHO // 2 - 60
-        self.x_cortina = ANCHO
-        self.posiciones = [i * 250 for i in range(len(self.correctas))]
+        self.lista_indices_disponibles = list(range(len(self.lista_total)))
+        self.usadas = set()
+        self.flag_menu = True
+        self.flag_transicion = False
+        self.flag_juego = False
+        self.flag_correcta = False
+        self.flag_incorrecta = False
+        self.flag_ganar = False
+        self.flag_perder = False
+        self.flag_vida_bajando = False
         self.activar_rng = True
-        self.sep = 60
-        self.pos_inicial_imagen_x = (ANCHO - (4 * 200 + 3 * self.sep)) // 2
         self.logo_en_juego = None
         self.correcta_en_juego = None
         self.nombre_correcta = None
-        self.pos_inicial_imagen_y = ALTO - 200 - 10
         self.pos_correcta = None
-        self.tiempo = 0
-        self.flag_incorrecta = False
-        self.flag_ganar = False
-        self.tiempo_ronda = 0
-        self.tiempos = []
+        self.vidas = 5
         self.tiempo_aux = 0
         self.monedas_obtenidas = 0
         self.contador_aciertos = 0
-        self.flag_perder = False
-        self.flag_vida_bajando = False
+        self.tiempo = 0
+        self.tiempo_ronda = 0
+        self.tiempos = []
+        self.sep = 60
+        self.x_doomguy = ANCHO // 2 - 60
+        self.x_cortina = ANCHO
+        self.posiciones = [i * 250 for i in range(len(self.correctas))]
+        self.pos_inicial_imagen_x = (ANCHO - (4 * 200 + 3 * self.sep)) // 2
+        self.pos_inicial_imagen_y = ALTO - 200 - 10
         self.cargar_records()
     def gestor_eventos(self):
         for event in pygame.event.get():
@@ -146,14 +148,12 @@ class Juego:
     def menu_principal(self):
         self.ventana.fill(COLOR_FONDO)
         self.info()
+        titulo_render = fuente_nombres.render(self.titulo, True, BLANCO)
+        self.ventana.blit(titulo_render, (ANCHO // 2 - titulo_render.get_width() // 2, 100))
         self.ventana.blit(self.doomguy.loop_idle(120, 3, 24, 29, 5, 200), (ANCHO // 2 -60, ALTO // 2-200))
         self.boton_salir((ANCHO // 2 + 100, ALTO // 2 + 100), (100, 100), BLANCO, ROJO, "SALIR", fuente, NEGRO)
         self.boton_jugar((ANCHO // 2 - 100, ALTO // 2 + 100), (100, 100), BLANCO, VERDE, "JUGAR", fuente, NEGRO)
-        titulo_render = fuente_nombres.render(self.titulo, True, BLANCO)
-        self.ventana.blit(titulo_render, (ANCHO // 2 - titulo_render.get_width() // 2, 100))
         self.tira_imagenes()
-        
-
 
     def transicion(self):
         self.ventana.fill(COLOR_FONDO)
@@ -312,7 +312,110 @@ class Juego:
             self.flag_juego = True
             self.encontrar_logo()
 
+    def its_over(self, imagen, imagen2, texto, color):
+        self.ventana.fill(COLOR_FONDO)
+        self.info()
+        self.tiempo_aux += 1
+        if self.tiempo_aux < 120:
+            self.calcular_stats()
+            self.guardar_records()
+            self.ventana.blit(imagen, (self.x_doomguy, ALTO // 2 - 200))
+        elif self.tiempo_aux < 360:
+            if self.x_doomguy < ANCHO // 2 - 60:
+                self.x_doomguy += 2
+            self.ventana.blit(imagen, (self.x_doomguy, ALTO // 2 - 200))
+        elif self.tiempo_aux < 480:
+            self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
+            # self.ventana.blit(self.monedas_obtenidas, (ANCHO // 2, ALTO // 2))
+        elif self.tiempo_aux < 1080:
+            self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
+            mostrar_tiempo = self.formatear_tiempo(self.calcular_stats())
+            mostrar_tiempo_record = self.formatear_tiempo(self.record_tiempo)
+            self.ventana.blit(fuente.render(f"Monedas obtenidas esta partida: {self.monedas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2))
+            self.ventana.blit(fuente.render(f"Record de monedas obtenidas: {self.record_monedas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 40))
+            if self.calcular_stats() == float('inf'):
+                self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: N/A", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
+            else:
+                self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: {mostrar_tiempo}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
+            self.ventana.blit(fuente.render(f"Promedio record por ronda: {mostrar_tiempo_record}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 120))
+        else:
+            self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
+            self.cinematica_final(texto, color)
+    
+    def cinematica_final(self, text, color):
+        fade_duration = 2000 
+        text_duration = 3000  
+        self.tiempo += 1
+        fade_frames = fade_duration // (1000 // 60)  
+        text_frames = text_duration // (1000 // 60)  
+        fade_surface = pygame.Surface((ANCHO, ALTO))
+        fade_surface.fill(NEGRO)
+        text_surface = fuente_nombres.render(text, True, color)
+        if self.tiempo < fade_frames:
+            alpha = (self.tiempo * 255) // fade_frames
+            fade_surface.set_alpha(alpha)
+            self.ventana.blit(fade_surface, (0, 0))
+        elif self.tiempo < fade_frames + text_frames: 
+            fade_surface.set_alpha(0)
+            self.ventana.fill(NEGRO)
+            text_alpha = ((self.tiempo - fade_frames) * 255) // text_frames
+            text_surface.set_alpha(text_alpha)
+            self.ventana.blit(text_surface, (ANCHO // 2 - text_surface.get_width() // 2, ALTO // 2 - text_surface.get_height() // 2))
+            self.ventana.blit(fade_surface, (0, 0))
+        else:
+            self.reiniciar_juego()
 
+    def reiniciar_juego(self):
+        self.flag_menu = True
+        self.flag_transicion = False
+        self.flag_juego = False
+        self.flag_correcta = False
+        self.vidas = 5
+        self.x_doomguy = ANCHO // 2 - 60
+        self.x_cortina = ANCHO
+        self.tiempo = 0
+        self.flag_incorrecta = False
+        self.flag_ganar = False
+        self.doomguy = Sprites(pygame.image.load("src\Doomguy_fijandose.png"))
+        self.lista_total = self.lista_para_resetear.copy()
+        self.tiempo_ronda = 0
+        self.tiempos = []
+        self.tiempo_aux = 0
+        self.monedas_obtenidas = 0
+        self.contador_aciertos = 0
+        self.flag_perder = False
+        self.flag_vida_bajando = False
+        self.activar_rng = True
+        self.lista_indices_disponibles = list(range(len(self.lista_total)))
+        self.usadas = set()
+        self.logo_en_juego = None
+        self.correcta_en_juego = None
+        self.nombre_correcta = None
+        self.pos_correcta = None
+        self.adidas = self.adidas2.copy()
+        self.apple = self.apple2.copy()
+        self.boca = self.boca2.copy()
+        self.coca = self.coca2.copy()
+        self.facebook = self.facebook2.copy()
+        self.ferrari = self.ferrari2.copy()
+        self.google = self.google2.copy()
+        self.instagram = self.instagram2.copy()
+        self.mcdonalds = self.mcdonalds2.copy()
+        self.nike = self.nike2.copy()
+        self.pepsi = self.pepsi2.copy()
+        self.twitter = self.twitter2.copy()
+        self.whatsapp = self.whatsapp2.copy()
+        self.windows = self.windows2.copy()
+        self.encontrar_logo()
+
+    def formatear_tiempo(self, total_segundos):
+        delta = timedelta(seconds=total_segundos)
+        d = datetime(1, 1, 1) + delta
+        minutes = d.strftime("%M")
+        segundos = d.strftime("%S")
+        decimas = int(d.microsecond // 100000)  
+        return f"{minutes}:{segundos}.{decimas}"
+    
     def reconocer_logo(self, numero):
         match numero:
             case 0:
@@ -400,49 +503,7 @@ class Juego:
                 return self.doomguy_errores.transformar_imagen(1, 24, 29, 5)
             case 5:
                 return self.doomguy_errores.transformar_imagen(0, 24, 29, 5)
-    
-    def its_over(self, imagen, imagen2, texto, color):
-        self.ventana.fill(COLOR_FONDO)
-        self.info()
-        self.tiempo_aux += 1
-        if self.tiempo_aux < 120:
-            self.calcular_stats()
-            self.guardar_records()
-            self.ventana.blit(imagen, (self.x_doomguy, ALTO // 2 - 200))
-        elif self.tiempo_aux < 360:
-            if self.x_doomguy < ANCHO // 2 - 60:
-                self.x_doomguy += 2
-            self.ventana.blit(imagen, (self.x_doomguy, ALTO // 2 - 200))
-        elif self.tiempo_aux < 480:
-            self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
-            # self.ventana.blit(self.monedas_obtenidas, (ANCHO // 2, ALTO // 2))
-        elif self.tiempo_aux < 1080:
-            self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
-            mostrar_tiempo = self.formatear_tiempo(self.calcular_stats())
-            mostrar_tiempo_record = self.formatear_tiempo(self.record_tiempo)
-            self.ventana.blit(fuente.render(f"Monedas obtenidas esta partida: {self.monedas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2))
-            self.ventana.blit(fuente.render(f"Record de monedas obtenidas: {self.record_monedas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 40))
-            if self.calcular_stats() == float('inf'):
-                self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: N/A", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
-            else:
-                self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: {mostrar_tiempo}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
-            self.ventana.blit(fuente.render(f"Promedio record por ronda: {mostrar_tiempo_record}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 120))
-        else:
-            self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
-            self.cinematica_final(texto, color)
-            
-    
-    def calcular_stats(self):
-        if self.contador_aciertos:
-            promedio_tiempo = sum(self.tiempos) / self.contador_aciertos
-            promedio_tiempo = round(promedio_tiempo, 2)
-        else:
-            promedio_tiempo = float('inf')
-        if promedio_tiempo < self.record_tiempo:
-            self.record_tiempo = promedio_tiempo
-        if self.monedas_obtenidas > self.record_monedas:
-            self.record_monedas = self.monedas_obtenidas
-        return promedio_tiempo
+
     def cargar_records(self):
         try:
             with open('records.json', 'r') as file:
@@ -461,78 +522,17 @@ class Juego:
         }
         with open('records.json', 'w') as file:
             json.dump(data, file, indent=4)
-        
-    def cinematica_final(self, text, color):
-        fade_duration = 2000 
-        text_duration = 3000  
-        self.tiempo += 1
-        fade_frames = fade_duration // (1000 // 60)  
-        text_frames = text_duration // (1000 // 60)  
-        fade_surface = pygame.Surface((ANCHO, ALTO))
-        fade_surface.fill(NEGRO)
-        text_surface = fuente_nombres.render(text, True, color)
-        if self.tiempo < fade_frames:
-            alpha = (self.tiempo * 255) // fade_frames
-            fade_surface.set_alpha(alpha)
-            self.ventana.blit(fade_surface, (0, 0))
-        elif self.tiempo < fade_frames + text_frames: 
-            fade_surface.set_alpha(0)
-            self.ventana.fill(NEGRO)
-            text_alpha = ((self.tiempo - fade_frames) * 255) // text_frames
-            text_surface.set_alpha(text_alpha)
-            self.ventana.blit(text_surface, (ANCHO // 2 - text_surface.get_width() // 2, ALTO // 2 - text_surface.get_height() // 2))
-            self.ventana.blit(fade_surface, (0, 0))
+    
+    def calcular_stats(self):
+        if self.contador_aciertos:
+            promedio_tiempo = sum(self.tiempos) / self.contador_aciertos
+            promedio_tiempo = round(promedio_tiempo, 2)
         else:
-            self.reiniciar_juego()
-    def reiniciar_juego(self):
-        self.flag_menu = True
-        self.flag_transicion = False
-        self.flag_juego = False
-        self.flag_correcta = False
-        self.vidas = 5
-        self.x_doomguy = ANCHO // 2 - 60
-        self.x_cortina = ANCHO
-        self.tiempo = 0
-        self.flag_incorrecta = False
-        self.flag_ganar = False
-        self.doomguy = Sprites(pygame.image.load("src\Doomguy_fijandose.png"))
-        self.lista_total = self.lista_para_resetear.copy()
-        self.tiempo_ronda = 0
-        self.tiempos = []
-        self.tiempo_aux = 0
-        self.monedas_obtenidas = 0
-        self.contador_aciertos = 0
-        self.flag_perder = False
-        self.flag_vida_bajando = False
-        self.activar_rng = True
-        self.lista_indices_disponibles = list(range(len(self.lista_total)))
-        self.usadas = set()
-        self.logo_en_juego = None
-        self.correcta_en_juego = None
-        self.nombre_correcta = None
-        self.pos_correcta = None
-        self.adidas = self.adidas2.copy()
-        self.apple = self.apple2.copy()
-        self.boca = self.boca2.copy()
-        self.coca = self.coca2.copy()
-        self.facebook = self.facebook2.copy()
-        self.ferrari = self.ferrari2.copy()
-        self.google = self.google2.copy()
-        self.instagram = self.instagram2.copy()
-        self.mcdonalds = self.mcdonalds2.copy()
-        self.nike = self.nike2.copy()
-        self.pepsi = self.pepsi2.copy()
-        self.twitter = self.twitter2.copy()
-        self.whatsapp = self.whatsapp2.copy()
-        self.windows = self.windows2.copy()
-        self.encontrar_logo()
-
-    def formatear_tiempo(self, total_segundos):
-        delta = timedelta(seconds=total_segundos)
-        d = datetime(1, 1, 1) + delta
-        minutes = d.strftime("%M")
-        segundos = d.strftime("%S")
-        decimas = int(d.microsecond // 100000)  
-        return f"{minutes}:{segundos}.{decimas}"
-
-
+            promedio_tiempo = float('inf')
+        if promedio_tiempo < self.record_tiempo:
+            self.record_tiempo = promedio_tiempo
+        if self.monedas_obtenidas > self.record_monedas:
+            self.record_monedas = self.monedas_obtenidas
+        return promedio_tiempo
+    
+        
