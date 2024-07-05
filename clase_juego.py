@@ -1,6 +1,7 @@
 from Imagenes import *
 import random
 import json
+from datetime import *
 class Juego:
     def __init__(self):
         self.ventana = ventana
@@ -199,11 +200,12 @@ class Juego:
         texto = fuente_nombres.render(self.nombre_correcta, True, NEGRO)
         pos_texto = texto.get_rect(center=(self.x_cortina + 223, ALTO // 2 - 50))
         self.ventana.blit(texto, pos_texto)
-        self.ventana.blit(self.cortinas.loop_idle(10, 15, 149, 89, 3, 0, True), (self.x_cortina, ALTO // 2-200))
-        if self.tiempo < 120:
+        if self.tiempo < 150:
             self.tiempo += 1
+            self.ventana.blit(self.cortinas.loop_idle(10, 15, 149, 89, 3, 0, False), (self.x_cortina, ALTO // 2-200))
             self.info()
         else:
+            self.ventana.blit(self.cortinas.transformar_imagen(14, 149, 89, 3), (self.x_cortina, ALTO // 2-200))
             self.generar_ronda()
         self.boton_menu((ANCHO - 150, 60), (100, 60), BLANCO, AMARILLITO, "MENU", fuente, NEGRO)
         self.boton_salir((ANCHO - 50, 60), (100, 60), BLANCO, ROJO, "SALIR", fuente, NEGRO)
@@ -235,7 +237,8 @@ class Juego:
             self.tiempo_ronda += 1
             self.info()
             self.ventana.blit(self.vidas_actuales(self.vidas), (120, 0))
-            self.ventana.blit(fuente.render(f"{round(self.tiempo_ronda / 60, 2)}s", True, (BLANCO)), (100,100))
+            mostrar_tiempo = self.formatear_tiempo(round(self.tiempo_ronda / 60, 2))
+            self.ventana.blit(fuente.render(f"{mostrar_tiempo}s", True, (BLANCO)), (100,100))
             self.ventana.blit(fuente.render(f"{self.contador_aciertos}/15 aciertos", True, (BLANCO)), (800,100))
             if self.flag_incorrecta:
                 self.tiempo_aux += 1
@@ -260,7 +263,7 @@ class Juego:
                                 self.pos_correcta = rect_imagen
                                 self.monedas += 20
                                 self.monedas_obtenidas += 20
-                                self.contador_aciertos += 15
+                                self.contador_aciertos += 1
                                 self.tiempos.append(self.tiempo_ronda / 60)
                                 self.tiempo = 0
                                 self.tiempo_ronda = 0
@@ -287,15 +290,19 @@ class Juego:
         cuadrado.fill(VERDE_AQUAMARINA)
         cuadrado2 = pygame.Surface((100, 60))
         cuadrado2.fill(NARANJA)
+        cuadrado3 = pygame.Surface((150, 80))
+        cuadrado3.fill(COLOR_FONDO)
         self.ventana.blit(cuadrado2, (ANCHO - 200, 0))
         self.ventana.blit(cuadrado, (60, 11))
+        self.ventana.blit(cuadrado3, (800, 100))
+        self.ventana.blit(fuente.render(f"{self.contador_aciertos}/15 aciertos", True, (BLANCO)), (800,100))
         monedas_render = fuente.render(f"{self.monedas}", True, BLANCO)
         self.ventana.blit(monedas_render, (60, 11))
-        if self.tiempo < 180:
+        if self.tiempo < 150:
             pygame.draw.rect(self.ventana, (VERDE), self.pos_correcta, 5)
             self.ventana.blit(self.correcto(), (self.x_doomguy, ALTO // 2-200))
-            self.ventana.blit(self.cortinas_cerrandose.loop_idle(10, 15, 149, 89, 3, 0, True), (self.x_cortina, ALTO // 2-200))
-        elif self.tiempo < 360:
+            self.ventana.blit(self.cortinas_cerrandose.loop_idle(10, 15, 149, 89, 3, 0, False), (self.x_cortina, ALTO // 2-200))
+        elif self.tiempo < 300:
             tapon = pygame.Surface((1024, 250))
             tapon.fill(COLOR_FONDO)
             ventana.blit(tapon, (0, ALTO - 250))
@@ -411,16 +418,18 @@ class Juego:
             # self.ventana.blit(self.monedas_obtenidas, (ANCHO // 2, ALTO // 2))
         elif self.tiempo_aux < 1080:
             self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
+            mostrar_tiempo = self.formatear_tiempo(self.calcular_stats())
+            mostrar_tiempo_record = self.formatear_tiempo(self.record_tiempo)
             self.ventana.blit(fuente.render(f"Monedas obtenidas esta partida: {self.monedas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2))
             self.ventana.blit(fuente.render(f"Record de monedas obtenidas: {self.record_monedas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 40))
             if self.calcular_stats() == float('inf'):
                 self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: N/A", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
             else:
-                self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: {self.calcular_stats()}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
-            self.ventana.blit(fuente.render(f"Promedio record por ronda: {self.record_tiempo}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 120))
+                self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: {mostrar_tiempo}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
+            self.ventana.blit(fuente.render(f"Promedio record por ronda: {mostrar_tiempo_record}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 120))
         else:
             self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
-            self.fade_in_out_text(texto, color)
+            self.cinematica_final(texto, color)
             
     
     def calcular_stats(self):
@@ -453,7 +462,7 @@ class Juego:
         with open('records.json', 'w') as file:
             json.dump(data, file, indent=4)
         
-    def fade_in_out_text(self, text, color):
+    def cinematica_final(self, text, color):
         fade_duration = 2000 
         text_duration = 3000  
         self.tiempo += 1
@@ -517,5 +526,13 @@ class Juego:
         self.whatsapp = self.whatsapp2.copy()
         self.windows = self.windows2.copy()
         self.encontrar_logo()
+
+    def formatear_tiempo(self, total_segundos):
+        delta = timedelta(seconds=total_segundos)
+        d = datetime(1, 1, 1) + delta
+        minutes = d.strftime("%M")
+        segundos = d.strftime("%S")
+        decimas = int(d.microsecond // 100000)  
+        return f"{minutes}:{segundos}.{decimas}"
 
 
