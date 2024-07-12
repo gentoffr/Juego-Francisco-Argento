@@ -96,6 +96,6 @@ def cargar_rutas_desde_csv(archivo_csv):
                 rutas[key].extend(row)
     return rutas
 
-# print(crear_lista("src\Imagenes"))
+print(crear_lista("src\Imagenes"))
 
-# print(crear_lista_desde_csv("rutas.csv"))
+print(crear_lista_desde_csv("rutas.csv"))
