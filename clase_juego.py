@@ -260,7 +260,7 @@ class Juego:
                     colision = rect_imagen.collidepoint(pygame.mouse.get_pos())
                     if imagen in self.correctas:
                         self.pos_correcta = rect_imagen
-                    if self.tiempo_ronda >= 5 * 60:
+                    if self.tiempo_ronda >= 30 * 60:
                         self.vidas -= (len(self.logo_en_juego) - 1) - self.lista_restantes
                         self.monedas -= 10 * ((len(self.logo_en_juego)-1) - self.lista_restantes)
                         self.monedas_obtenidas -= 10 * ((len(self.logo_en_juego)-1) - self.lista_restantes)
@@ -325,7 +325,6 @@ class Juego:
         monedas_render = fuente.render(f"{self.monedas}", True, BLANCO)
         self.ventana.blit(monedas_render, (60, 11))
         if self.tiempo < 150:
-            print(self.vidas)
             pygame.draw.rect(self.ventana, (VERDE), self.pos_correcta, 5)
             self.ventana.blit(self.correcto(), (self.x_doomguy, ALTO // 2-200))
             self.ventana.blit(self.cortinas_cerrandose.loop_idle(10, 15, 149, 89, 3, 0, False), (self.x_cortina, ALTO // 2-200))
@@ -360,10 +359,10 @@ class Juego:
             self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
             mostrar_tiempo = self.formatear_tiempo(self.calcular_stats())
             mostrar_tiempo_record = self.formatear_tiempo(self.record_tiempo)
-            self.ventana.blit(fuente.render(f"Monedas obtenidas esta partida: {self.monedas_obtenidas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2))
-            self.ventana.blit(fuente.render(f"Record de monedas obtenidas: {self.record_monedas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 40))
-            self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: {mostrar_tiempo}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
-            self.ventana.blit(fuente.render(f"Promedio record por ronda: {mostrar_tiempo_record}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 120))
+            self.ventana.blit(fuente.render(f"Monedas obtenidas esta partida: {self.monedas_obtenidas}".capitalize(), True, BLANCO), (ANCHO // 2 - 200, ALTO // 2))
+            self.ventana.blit(fuente.render(f"Record de monedas obtenidas: {self.record_monedas}".capitalize(), True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 40))
+            self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: {mostrar_tiempo}s".capitalize(), True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
+            self.ventana.blit(fuente.render(f"Promedio record por ronda: {mostrar_tiempo_record}s".capitalize(), True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 120))
         else:
             self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
             self.cinematica_final(texto, color)
@@ -392,6 +391,10 @@ class Juego:
             self.reiniciar_juego()
 
     def reiniciar_juego(self):
+        if self.monedas < 0:
+            self.monedas = 0
+        if self.monedas_obtenidas < 0:
+            self.monedas_obtenidas = 0
         self.flag_menu = True
         self.flag_transicion = False
         self.flag_juego = False
@@ -553,8 +556,8 @@ class Juego:
     
     def calcular_stats(self):
         if self.contador_aciertos:
-            promedio_tiempo = sum(self.tiempos) / self.contador_aciertos
-            promedio_tiempo = round(promedio_tiempo, 2)
+            calcular = lambda x, y: round(sum(x) / y, 2)
+            promedio_tiempo = calcular(self.tiempos, self.contador_aciertos)
         else:
             promedio_tiempo = float('inf')
         if promedio_tiempo < self.record_tiempo:
