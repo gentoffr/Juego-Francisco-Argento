@@ -9,7 +9,7 @@ class Juego:
         self.reloj = pygame.time.Clock()
         self.corriendo = True
         self.titulo = "Juego bien malandro"
-        
+        self.lista_restantes = 0
         self.monedas = 0
         self.record_monedas = 0
         self.record_tiempo = 0
@@ -33,7 +33,7 @@ class Juego:
         self.UHHHHH = Sprites(pygame.image.load(r"src\UHHHHHH.png"))
         self.doomGOD = Sprites(pygame.image.load("src\DoomGOD.png"))
         
-        self.lista_total = crear_lista("src\Imagenes")
+        self.lista_total = crear_lista(r"src\Imagenes")
         self.adidas = self.lista_total["Adidas"]
         self.apple = self.lista_total["Apple"]
         self.boca = self.lista_total["Boca Juniors"]
@@ -234,6 +234,8 @@ class Juego:
             self.flag_ganar = True
             self.tiempo = 0
         else:
+            if self.monedas < 0:
+                self.monedas = 0
             self.tiempo_ronda += 1
             self.info()
             self.ventana.blit(self.vidas_actuales(self.vidas), (120, 0))
@@ -256,11 +258,35 @@ class Juego:
                     self.ventana.blit(imagen, (pos_x, self.pos_inicial_imagen_y))
                     rect_imagen = imagen.get_rect(topleft=(pos_x, self.pos_inicial_imagen_y))
                     colision = rect_imagen.collidepoint(pygame.mouse.get_pos())
+                    if imagen in self.correctas:
+                        self.pos_correcta = rect_imagen
+                    if self.tiempo_ronda >= 5 * 60:
+                        self.vidas -= (len(self.logo_en_juego) - 1) - self.lista_restantes
+                        self.monedas -= 10 * ((len(self.logo_en_juego)-1) - self.lista_restantes)
+                        self.monedas_obtenidas -= 10 * ((len(self.logo_en_juego)-1) - self.lista_restantes)
+                        if self.vidas < 0:
+                            self.vidas = 0
+                            self.tiempo = 0
+                            self.tiempos.append(self.tiempo_ronda / 60)
+                            self.tiempo_ronda = 0
+                            if self.monedas < 0:
+                                self.monedas = 0
+                            self.flag_perder = True
+                            self.flag_juego = False
+                        else:
+                            if self.monedas < 0:
+                                self.monedas = 0
+                            self.tiempo = 0
+                            self.tiempos.append(self.tiempo_ronda / 60)
+                            self.tiempo_ronda = 0
+                            self.lista_total = self.lista_para_resetear.copy()
+                            self.flag_vida_bajando = True
+                            self.flag_correcta = True
+                            self.flag_juego = False
                     if pygame.mouse.get_pressed()[0]:
                         if colision and not self.mouse_button_down:
                             self.mouse_button_down = True
-                            if self.logo_en_juego[i] in self.correctas:
-                                self.pos_correcta = rect_imagen
+                            if imagen in self.correctas:
                                 self.monedas += 20
                                 self.monedas_obtenidas += 20
                                 self.contador_aciertos += 1
@@ -270,11 +296,10 @@ class Juego:
                                 self.flag_correcta = True
                                 self.flag_juego = False
                             else:
+                                self.lista_restantes += 1
                                 self.logo_en_juego[i] = None
                                 self.vidas -= 1
                                 self.monedas -= 10
-                                if self.monedas < 0:
-                                    self.monedas = 0
                                 self.monedas_obtenidas -= 10
                                 self.flag_vida_bajando = True
                                 self.flag_incorrecta = True
@@ -283,6 +308,7 @@ class Juego:
 
 
     def acertar(self):
+        self.lista_restantes = 0
         self.tiempo += 1
         self.boton_salir((ANCHO - 50, 60), (100, 60), BLANCO, ROJO, "SALIR", fuente, NEGRO)
         self.ventana.blit(self.imagen_moneda.loop_idle(10, 8, 47, 47, 1), (5, 7))
@@ -294,11 +320,12 @@ class Juego:
         cuadrado3.fill(COLOR_FONDO)
         self.ventana.blit(cuadrado2, (ANCHO - 200, 0))
         self.ventana.blit(cuadrado, (60, 11))
-        self.ventana.blit(cuadrado3, (800, 100))
+        self.ventana.blit(cuadrado3, (800, 80))
         self.ventana.blit(fuente.render(f"{self.contador_aciertos}/15 aciertos", True, (BLANCO)), (800,100))
         monedas_render = fuente.render(f"{self.monedas}", True, BLANCO)
         self.ventana.blit(monedas_render, (60, 11))
         if self.tiempo < 150:
+            print(self.vidas)
             pygame.draw.rect(self.ventana, (VERDE), self.pos_correcta, 5)
             self.ventana.blit(self.correcto(), (self.x_doomguy, ALTO // 2-200))
             self.ventana.blit(self.cortinas_cerrandose.loop_idle(10, 15, 149, 89, 3, 0, False), (self.x_cortina, ALTO // 2-200))
@@ -316,6 +343,8 @@ class Juego:
         self.ventana.fill(COLOR_FONDO)
         self.info()
         self.tiempo_aux += 1
+        if self.monedas_obtenidas < 0:
+            self.monedas_obtenidas = 0
         if self.tiempo_aux < 120:
             self.calcular_stats()
             self.guardar_records()
@@ -331,12 +360,9 @@ class Juego:
             self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
             mostrar_tiempo = self.formatear_tiempo(self.calcular_stats())
             mostrar_tiempo_record = self.formatear_tiempo(self.record_tiempo)
-            self.ventana.blit(fuente.render(f"Monedas obtenidas esta partida: {self.monedas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2))
+            self.ventana.blit(fuente.render(f"Monedas obtenidas esta partida: {self.monedas_obtenidas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2))
             self.ventana.blit(fuente.render(f"Record de monedas obtenidas: {self.record_monedas}", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 40))
-            if self.calcular_stats() == float('inf'):
-                self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: N/A", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
-            else:
-                self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: {mostrar_tiempo}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
+            self.ventana.blit(fuente.render(f"Promedio de tiempo por ronda: {mostrar_tiempo}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 80))
             self.ventana.blit(fuente.render(f"Promedio record por ronda: {mostrar_tiempo_record}s", True, BLANCO), (ANCHO // 2 - 200, ALTO // 2 + 120))
         else:
             self.ventana.blit(imagen2, (self.x_doomguy, ALTO // 2 - 200))
@@ -409,6 +435,8 @@ class Juego:
         self.encontrar_logo()
 
     def formatear_tiempo(self, total_segundos):
+        if total_segundos == float("inf"):
+            return "No hubo acierto"
         delta = timedelta(seconds=total_segundos)
         d = datetime(1, 1, 1) + delta
         minutes = d.strftime("%M")

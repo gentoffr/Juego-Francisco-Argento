@@ -1,9 +1,3 @@
-from clase_juego import *
+print(crear_lista("src\Imagenes"))
 
-juego = Juego()
-
-while juego.corriendo:
-    juego.reloj.tick(juego.fps)
-    juego.gestor_eventos()
-    juego.gestion_botones()
-    pygame.display.flip()
+# print(crear_lista_desde_csv("rutas.csv"))
